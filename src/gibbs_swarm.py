@@ -10,6 +10,7 @@ import math
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import matplotlib
+import time
 
 np.seterr(divide='ignore', invalid='ignore')
 class GibbsSwarm(object):
@@ -32,6 +33,7 @@ class GibbsSwarm(object):
 		self.kernel_rI = self.kernel_generation(self.rI)
 		self.kernel_rS = self.kernel_generation(self.rS)
 
+		matplotlib.use('TkAgg')
 		self.fig = plt.figure()
 		#self.fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
 		self.ax = self.fig.add_subplot(111, aspect='equal', autoscale_on=False,
@@ -90,54 +92,25 @@ class GibbsSwarm(object):
 		for i in range(self.x.shape[0]): # for each robot
 			xs = self.x[i,:]
 			Fs = self.mobility(xs)
-			#print("\nxs:")
-			#print(xs)
 
 			Z = 0
-			for zs in Fs: # compute denominator
+			H = []
+			for zs in Fs: # compute mobility probability
 				tau_s = self.neighborhood(xs, zs)
 				obs = self.obstacles(zs)
-				Hz = [self.Us(zs)]
+				Hz = self.Us(zs)
 				for xt in tau_s:
-					Hz.append(self.Ust(zs, xt))
+					Hz += self.Ust(zs, xt)
 				Hobs = []
 				for os in obs:
 					Hobs.append(self.Uso(zs, os))
 				if Hobs:
 					Hobs = np.array(Hobs)
-					Hz.append(Hobs.max())
-				Hz = np.array(Hz)
-				#print("Hz:")
-				#print(Hz.T)
-				#print(-Hz.sum()/T)
-				Z += np.exp(-Hz.sum()/T)
-			pTs = []
-
-			for ys in Fs:
-				tau_s = self.neighborhood(xs, ys)
-				#print("neighborhood:")
-				#print(tau_s.T)
-				#print("obstacles:")
-				obs = self.obstacles(ys)
-				#print(obs.T)
-				Hy = [self.Us(ys)]
-				for xt in tau_s:
-					Hy.append(self.Ust(ys, xt))
-				Hobs = []
-				for os in obs:
-					Hobs.append(self.Uso(ys, os))
-				if Hobs:
-					Hobs = np.array(Hobs)
-					Hy.append(Hobs.max())
-				Hy = np.array(Hy)
-				p = np.exp(-Hy.sum()/T)/Z
-				pTs.append(p)
-			#print("probs:"),
-			#print(pTs)
-			#print("END\n")
-			pTs = np.array(pTs)
-			#print("probs:")
-			#print(pTs.T)
+					Hz += Hobs.max()			
+				H.append(np.exp(-Hz/T))
+			H = np.array(H)
+			Z = H.sum()
+			pTs = H/Z
 			pTs = np.nan_to_num(pTs)
 			for j in range(pTs.shape[0]):
 				idx = np.random.choice(Fs.shape[0], 1, p=pTs)
@@ -146,24 +119,14 @@ class GibbsSwarm(object):
 					break
 				if np.any((x_new == xs).sum(axis=1) == 2):
 					pTs[idx] = 0.0
-					#print((x_new == xs).sum(axis=1))
-					#print(xs)
-					#print(x_new)
-					#print("Remove")
 					pTs = pTs/pTs.sum()
 				else:
 					x_new[i,:] = xs
 					break
 			
-			for j in range(Fs.shape[0]):
-				xs = Fs[j, :]
-				self.ax.plot(xs[0]+0.5, xs[1]+0.5, 'o', color='red', ms=5*self.figH/4.8, alpha=pTs[j])
-			#print("probs:")
-			#print(pTs.T)
-			#print("mobs:")
-			#print(Fs.T)
-			#print("=====================================")
-			#input()
+			#for j in range(Fs.shape[0]):
+			#	xs = Fs[j, :]
+			#	self.ax.plot(xs[0]+0.5, xs[1]+0.5, 'o', color='red', ms=5*self.figH/4.8, alpha=pTs[j])
 
 		self.x = x_new[:]
 		# Condition - Do not get out from the world
@@ -220,11 +183,13 @@ class GibbsSwarm(object):
 ITERATIONS = 1000
 
 if __name__ == '__main__':
-	gs = GibbsSwarm(ROBOTS=40, WORLD=50, rS=13*np.sqrt(2)+2, rI=13*np.sqrt(2), rM=2, seed=100)
+	gs = GibbsSwarm(ROBOTS=40, WORLD=50, rS=13*np.sqrt(2)+2, rI=13*np.sqrt(2), rM=2, seed=1000)
 	#gs = GibbsSwarm(ROBOTS=40, WORLD=50, rS=8, rI=5, rM=1, seed=100)
 	print("Starting")
 	for i in tqdm(range(ITERATIONS), ncols=100):
+		t = time.time()
 		gs.update(i+1)
+		print("    Time: ", time.time() - t)
 		if i % 1 == 0:
 			gs.display()
 			#gs.screenshot("data/image_"+str(i)+".png")

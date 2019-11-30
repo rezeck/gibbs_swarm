@@ -1,17 +1,28 @@
 # Gibbs Swarm Coordination
 
-Implementation a decentralized coordination of autonomous swarms using parallel Gibbs sampling.
+Implementation of a decentralized coordination of autonomous swarms using parallel Gibbs sampling.
+
+# Dependecies
+
+- Python3
+- Numpy
+- Matplotlib
+- tqdm
+
 
 ## Rendezvous Problem
 
 - Initial Configuration
-<img style="float: left; margin:0 10px 10px 0" src="imgs/initial_condition.png" width="600">
+
+<img style="float: left; margin:0 10px 10px 0" src="imgs/initial_condition.png" width="400">
 
 - After 300 iterations
-<img style="float: left; margin:0 10px 10px 0" src="imgs/n300.png" width="600">
+
+<img style="float: left; margin:0 10px 10px 0" src="imgs/n300.png" width="400">
 
 - After 500 iterations
-<img style="float: left; margin:0 10px 10px 0" src="imgs/n550.png" width="600">
+
+<img style="float: left; margin:0 10px 10px 0" src="imgs/n550.png" width="400">
 
 
 # Reference
